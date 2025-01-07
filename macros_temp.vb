@@ -903,3 +903,391 @@ Application.EnableEvents = True
 End Sub
 
 
+
+Public Sub CH6M28(control As IRibbonControl)
+'GUARDAR COMO DESDE BOTON
+'control As IRibbonControl
+Application.ScreenUpdating = False
+Application.Calculation = xlCalculationManual
+Application.EnableEvents = False
+'-----------------------------------------------------
+On Error GoTo 346
+On Error GoTo -1
+'Declaramos las variables.
+Dim VentanasProtegidas As Boolean
+Dim EstructuraProtegida As Boolean
+Dim NombreHoja As String
+Dim Confirmacion As String
+Dim NombreArchivo As String
+Dim GuardarComo As Variant
+Dim Extension As String
+Dim librooriginal As String
+'-----------------------------------------------------
+ThisWorkbook.Unprotect "123"
+'-----------------------------------------------------
+
+'
+'En caso de error.
+On Error GoTo ErrorHandler
+'
+'Validamos si la ventana o la estructura del archivo están protegidos.
+VentanasProtegidas = ActiveWorkbook.ProtectWindows
+EstructuraProtegida = ActiveWorkbook.ProtectStructure
+'
+'En caso de estar protegidas mostramos mensaje.
+If VentanasProtegidas = True Or EstructuraProtegida = True Then
+    MsgBox "No se puede ejecutar el comando cuando la estructura del archivo está protegida.", _
+           vbExclamation, "S5S"
+Else
+    '
+    'Copiamos la hoja y guardamos.
+    librooriginal = ActiveWorkbook.Name
+    hojaoriginal = ActiveSheet.Name
+    Sheets("INSUMOS").Activate
+
+        Sheets("INSUMOS").Activate
+        ActiveSheet.Select
+        ActiveSheet.Copy
+        NombreArchivo = ActiveWorkbook.Name
+        Workbooks(librooriginal).Activate
+        On Error Resume Next
+            Application.DisplayAlerts = False
+        Sheets("BÁSICOS").Copy After:=Workbooks(NombreArchivo).Sheets(1)
+        Workbooks(librooriginal).Activate
+        Sheets("APU").Copy After:=Workbooks(NombreArchivo).Sheets(2)
+        Workbooks(librooriginal).Activate
+        Sheets("PRESUPUESTO").Copy After:=Workbooks(NombreArchivo).Sheets(3)
+            Application.DisplayAlerts = True
+        Workbooks(NombreArchivo).Activate
+        GuardarComo = Application.GetSaveAsFilename(InitialFileName:=NombreHoja, _
+            FileFilter:="Libro de Excel(*.xlsx), *.xlsx", Title:="S5S - guadar copia del proyecto.")
+        If GuardarComo = False Then
+            Workbooks(NombreArchivo).Close SaveChanges:=False
+        Else
+            With Application.WorksheetFunction
+                Extension = .Trim(Right(.Substitute(GuardarComo, ".", .Rept(" ", 650)), 650))
+            End With
+            
+Workbooks(librooriginal).Activate
+Sheets("LISTA_BÁSICOS").Activate
+Sheets("LISTA_BÁSICOS").Cells(2, 16200) = GuardarComo
+Sheets("LISTA_BÁSICOS").Cells(2, 16200).Select
+    With Selection.Font
+        .ThemeColor = xlThemeColorDark1
+        .TintAndShade = 0
+    End With
+Workbooks(NombreArchivo).Activate
+
+'----------------------------------------
+ 'impiar nombres
+
+Workbooks(NombreArchivo).Activate
+Dim nName As Name
+Dim lReply As Long
+    For Each nName In Names
+        nName.Delete
+    Next nName
+'------------------------------------------------------------------------
+'modificar botones
+
+Sheets("INSUMOS").Activate
+ActiveSheet.Shapes.SelectAll
+Selection.Delete
+
+Sheets("BÁSICOS").Activate
+ActiveSheet.Shapes.SelectAll
+Selection.Delete
+
+Sheets("APU").Activate
+ActiveSheet.Shapes.SelectAll
+Selection.Delete
+
+Sheets("PRESUPUESTO").Activate
+ActiveSheet.Shapes.SelectAll
+Selection.Delete
+'----------------------------------------
+'Quitar vinculos
+
+Workbooks(NombreArchivo).Activate
+nombuscar = librooriginal & "!"
+
+
+
+Sheets("INSUMOS").Activate
+    Cells.Replace What:=nombuscar, Replacement:="", LookAt:= _
+        xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+            ActiveSheet.Cells(2, 1).Select
+        
+Sheets("BÁSICOS").Activate
+    Cells.Replace What:=nombuscar, Replacement:="", LookAt:= _
+        xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+    Columns("J:AA").Select
+        Selection.Delete Shift:=xlToLeft
+            ActiveSheet.Cells(2, 1).Select
+        
+Sheets("APU").Activate
+    Cells.Replace What:=nombuscar, Replacement:="", LookAt:= _
+        xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+    Columns("J:AA").Select
+        Selection.Delete Shift:=xlToLeft
+            ActiveSheet.Cells(2, 1).Select
+            
+            
+nombuscar = "[" & librooriginal & "]"
+Sheets("PRESUPUESTO").Activate
+
+    Columns("J:AA").Select
+        Selection.Delete Shift:=xlToLeft
+
+
+    Cells.Replace What:=nombuscar, Replacement:="", LookAt:= _
+        xlPart, SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+        ReplaceFormat:=False
+            ActiveSheet.Cells(2, 2).Select
+            
+ '------------------------------------------------------------------------
+   Dim ExternalLinks As Variant
+Dim wb As Workbook
+Dim x As Long
+    Set wb = ActiveWorkbook
+    On Error GoTo 1001
+    On Error GoTo -1
+    ExternalLinks = wb.LinkSources(Type:=xlLinkTypeExcelLinks)
+        For x = 1 To UBound(ExternalLinks)
+            wb.BreakLink Name:=ExternalLinks(x), Type:=xlLinkTypeExcelLinks
+        Next x
+'------------------------------------------------------------------------
+1001
+'------------------------------------------------------------------------
+ 'guardar
+            
+Application.DisplayAlerts = False
+            Select Case Extension
+            Case Is = "xlsx"
+                ActiveWorkbook.SaveAs GuardarComo
+            End Select
+nombrelibro2 = ActiveWorkbook.Name
+
+ '------------------------------------------------------------------------
+End If
+End If
+Workbooks(nombrelibro2).Close SaveChanges:=False
+
+Sheets(hojaoriginal).Activate
+ThisWorkbook.Protect "123"
+'----------------------------------
+Application.DisplayAlerts = True
+Application.Calculation = xlCalculationAutomatic
+Application.EnableEvents = True
+Exit Sub
+'
+'En caso de error mostramos un mensaje.
+ErrorHandler:
+Workbooks(hojaoriginal).Close SaveChanges:=False
+Sheets(librooriginal).Activate
+346
+'-----------------------------------------------------
+Application.DisplayAlerts = True
+ThisWorkbook.Protect "123"
+Application.Calculation = xlCalculationAutomatic
+Application.EnableEvents = True
+End Sub
+
+
+Sub actinsuv02()
+Application.ScreenUpdating = False
+Application.Calculation = xlCalculationManual
+Application.EnableEvents = False
+Application.AutoCorrect.AutoFillFormulasInLists = False
+'-----------------------------------------------------
+Dim nombretbl As String
+Dim f1 As Long
+Dim nf As Long
+Dim fu As Long
+Dim rango As Range
+Dim celda As Range
+Dim filai As Long
+Dim tipo As String
+Dim tablatipoi As String
+Dim tabla As ListObject
+Dim tablaactiva As ListObject
+'-----------------------------------------------------
+'Para cada tabla para cada celda
+On Error GoTo 346
+On Error GoTo -1
+
+Sheets("BÁSICOS").Activate
+For Each tabla In Sheets("BÁSICOS").ListObjects
+nombretbl = tabla.Name
+ActiveSheet.ListObjects(nombretbl).ListRows(1).Range.Select
+Set tablaactiva = ActiveSheet.ListObjects(nombretbl)
+
+f1 = Selection.Row
+nf = tablaactiva.Range.Rows.Count - 2
+fu = f1 + nf
+
+Set rango = ActiveSheet.ListObjects(nombretbl).DataBodyRange
+For Each celda In rango.Rows
+filai = celda.Row
+On Error GoTo 346
+On Error GoTo -1
+tipo = ActiveSheet.Cells(filai, 1).Value
+
+If tipo = "MATERIALES" Then
+tablatipoi = "T_mat[[DESCRIPCIÓN]:[PRECIO]]"
+Else
+    If tipo = "EQUIPOS" Then
+    tablatipoi = "T_equipos[[DESCRIPCIÓN]:[PRECIO]]"
+    Else
+        If tipo = "MANO DE OBRA" Then
+        tablatipoi = "T_mano[[DESCRIPCIÓN]:[PRECIO]]"
+        Else
+            If tipo = "TRANSPORTE" Then
+            tablatipoi = "T_trans[[DESCRIPCIÓN]:[PRECIO]]"
+            Else
+                If tipo = "SUBCONTRATOS" Then
+                tablatipoi = "T_sub[[DESCRIPCIÓN]:[PRECIO]]"
+                Else
+                    If tipo = "ACTIVIDADES" Then
+                    tablatipoi = "T_act[[DESCRIPCIÓN]:[PRECIO]]"
+                    Else
+                        If tipo = "OTROS" Then
+                        tablatipoi = "T_otros[[DESCRIPCIÓN]:[PRECIO]]"
+                        Else
+                           GoTo 1
+End If
+End If
+End If
+End If
+End If
+End If
+End If
+
+
+ActiveSheet.Cells(filai, 8).FormulaR1C1 = "=[@CANTIDAD]*[@PRECIO]*[@FACTOR]"
+ActiveSheet.Cells(filai, 7).FormulaR1C1 = "=VLOOKUP([@DESCRIPCIÓN]," & tablatipoi & ",4,FALSE)"
+ActiveSheet.Cells(filai, 4).FormulaR1C1 = "=VLOOKUP([@DESCRIPCIÓN]," & tablatipoi & ",3,FALSE)"
+ActiveSheet.Cells(filai, 2).FormulaR1C1 = "=VLOOKUP([@DESCRIPCIÓN]," & tablatipoi & ",2,FALSE)"
+
+1
+Next celda
+Next tabla
+346
+'-----------------------------------------------------
+Application.AutoCorrect.AutoFillFormulasInLists = True
+Application.Calculation = xlCalculationAutomatic
+Application.EnableEvents = True
+End Sub
+
+
+
+Sub actinsuv04()
+Application.ScreenUpdating = False
+Application.Calculation = xlCalculationManual
+Application.EnableEvents = False
+Application.AutoCorrect.AutoFillFormulasInLists = False
+'-----------------------------------------------------
+Dim tabla As ListObject
+Dim nombretbl As String
+Dim tablaactiva As ListObject
+Dim f1 As Long
+Dim nf As Long
+Dim fu As Long
+Dim c1 As Long
+Dim tipotabla As String
+Dim rango As Range
+Dim filai As Long
+Dim nombre As String
+Dim celda As Range
+'-----------------------------------------------------
+'Para cada tabla para cada celda
+
+Sheets("PRESUPUESTO").Activate
+For Each tabla In Sheets("PRESUPUESTO").ListObjects
+Sheets("PRESUPUESTO").Activate
+nombretbl = tabla.Name
+ActiveSheet.ListObjects(nombretbl).ListRows(1).Range.Select
+Set tablaactiva = ActiveSheet.ListObjects(nombretbl)
+
+f1 = Selection.Row
+nf = tablaactiva.Range.Rows.Count - 2
+fu = f1 + nf
+ActiveSheet.ListObjects(nombretbl).ListColumns(1).Range.Select
+c1 = Selection.Column
+
+tipotabla = ActiveSheet.Cells(f1 - 1, c1).Value
+
+If tipotabla = "CÓDIGO" Then GoTo 1 Else GoTo 2
+
+1
+Set rango = ActiveSheet.ListObjects(nombretbl).ListColumns(2).DataBodyRange
+
+Sheets("PRESUPUESTO").Activate
+For Each celda In rango.Rows
+Sheets("PRESUPUESTO").Activate
+filai = celda.Row
+
+nombre = ActiveSheet.Cells(filai, 3).Value
+
+On Error GoTo 3
+On Error GoTo -1
+If nombre = "" Then GoTo 3 Else GoTo 4
+
+4
+ActiveSheet.Cells(filai, 8).FormulaR1C1 = "=[@CANTIDAD]*[@COSTO]*[@FACTOR]"
+ActiveSheet.Cells(filai, 7).FormulaR1C1 = "=VLOOKUP([@DESCRIPCIÓN],T_apus[[DESCRIPCIÓN]:[COSTO]],4,FALSE)"
+ActiveSheet.Cells(filai, 4).FormulaR1C1 = "=VLOOKUP([@DESCRIPCIÓN],T_apus[[DESCRIPCIÓN]:[COSTO]],3,FALSE)"
+ActiveSheet.Cells(filai, 2).FormulaR1C1 = "=VLOOKUP([@DESCRIPCIÓN],T_apus[[DESCRIPCIÓN]:[COSTO]],2,FALSE)"
+
+3
+Next celda
+2
+Next tabla
+
+'-----------------------------------------------------
+Application.AutoCorrect.AutoFillFormulasInLists = False
+Application.Calculation = xlCalculationAutomatic
+Application.EnableEvents = True
+End Sub
+
+
+Private Sub Worksheet_Change(ByVal Target As Range)
+'MsgBox "event fail presupuesto"
+If comprobar = 1 Then GoTo 346 Else GoTo 111
+111:
+On Error GoTo 346
+On Error GoTo -1
+    rango = ("C:C")
+        If Not Application.Intersect(Target, Range(rango)) Is Nothing Then
+            fila1 = ActiveCell.Row
+            columna1 = ActiveCell.Column
+            valor1 = ActiveSheet.Cells(fila1, columna1).Value
+            On Error Resume Next
+                If valor1 = "" Then
+                    Exit Sub
+                Else
+                            Application.Run ("CH6M27")
+                End If
+        End If
+'--------------------------------------------------------------------------------------------------------------
+Rango4 = ("F:F")
+    If Not Application.Intersect(Target, Range(Rango4)) Is Nothing Then
+    Set SelectedCell = ActiveCell
+fini = Selection.Row
+cini = Selection.Column
+Application.Run ("CH6M6")
+Sheets("PRESUPUESTO").Activate
+Columns("H:H").Select
+Selection.NumberFormat = "_(* #,##0_);_(* (#,##0);_(* ""-""_);_(@_)"
+Columns("H:H").EntireColumn.AutoFit
+Columns("E:E").EntireColumn.AutoFit
+    ActiveSheet.Cells(fini, cini).Select
+    End If
+346
+'--------------------------------------------------------------------------------------------------------------
+End Sub
+
+
